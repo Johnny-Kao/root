@@ -1,4 +1,4 @@
-name: RNTuple regression research
+name: ROOT staging full project CTest
 
 on:
   push:
@@ -10,19 +10,41 @@ permissions:
   contents: read
 
 jobs:
-  targeted-rntuple-merger:
+  full-root-ctest:
+    name: Full ROOT build and test (official Ubuntu CI image)
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 360
+    container:
+      image: registry.cern.ch/root-ci/ubuntu2404:buildready
+      options: --security-opt label=disable
+    env:
+      PYTHONUNBUFFERED: "1"
+      HOME: /github/home
     steps:
-      - uses: actions/checkout@v4
-      - name: Install build dependencies
+      - name: Checkout official ROOT CI scripts from staging
+        uses: actions/checkout@v6
+        with:
+          ref: staging/rntuple-recompression-page-checksum
+      - name: Check runner and set up workspace
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build cmake g++ python3-dev libx11-dev libxpm-dev libxft-dev libxext-dev libssl-dev liblzma-dev libxxhash-dev libgtest-dev libgmock-dev nlohmann-json3-dev
-      - name: Configure ROOT
+          set -euo pipefail
+          echo "Exact staging commit: 4453d740f5e0f5fa96ca6fe933549d55ccde5e2e"
+          git rev-parse HEAD
+          test "$(git rev-parse HEAD)" = "4453d740f5e0f5fa96ca6fe933549d55ccde5e2e"
+          df -h
+          mkdir -p "$HOME/ROOT-CI"
+      - name: Full ROOT build and all configured CTest tests
+        shell: bash
         run: |
-          cmake -S . -B build -G Ninja -Dminimal=ON -Dtesting=ON -DCMAKE_BUILD_TYPE=Release -Dbuiltin_zlib=ON -Dbuiltin_zstd=ON
-      - name: Build ROOT and tests
-        run: cmake --build build -j 2
-      - name: Run merger regression
-        run: ctest --test-dir build -R '^gtest-tree-ntuple-ntuple-merger$' --output-on-failure
+          set -euo pipefail
+          .github/workflows/root-ci-config/build_root.py \
+            --buildtype RelWithDebInfo \
+            --platform ubuntu2404 \
+            --platform_config ubuntu2404 \
+            --incremental false \
+            --upload_artifacts false \
+            --base_ref staging/rntuple-recompression-page-checksum \
+            --sha 4453d740f5e0f5fa96ca6fe933549d55ccde5e2e \
+            --repository https://github.com/Johnny-Kao/root.git \
+            --overrides asserts=ON LLVM_ENABLE_ASSERTIONS=ON imt=OFF CMAKE_BUILD_TYPE=Debug

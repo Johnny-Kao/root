@@ -29,6 +29,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           echo "Exact staging commit: 4453d740f5e0f5fa96ca6fe933549d55ccde5e2e"
           git rev-parse HEAD
           test "$(git rev-parse HEAD)" = "4453d740f5e0f5fa96ca6fe933549d55ccde5e2e"

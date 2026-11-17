@@ -18,7 +18,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake g++ python3-dev libx11-dev libxpm-dev libxft-dev libxext-dev libssl-dev
+          sudo apt-get install -y ninja-build cmake g++ python3-dev libx11-dev libxpm-dev libxft-dev libxext-dev libssl-dev liblzma-dev libxxhash-dev libgtest-dev nlohmann-json3-dev
       - name: Configure ROOT
         run: |
           cmake -S . -B build -G Ninja -Dminimal=ON -Dtesting=ON -DCMAKE_BUILD_TYPE=Release -Dbuiltin_zlib=ON -Dbuiltin_zstd=ON
